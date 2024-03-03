@@ -56,6 +56,9 @@ async def log_actions(content, author_name):
 @bot.event
 async def on_ready():
     print(f'{bot.user} has connected to Discord!')
+    bot_channel = bot.get_channel(BOT_CHANNEL)
+    if bot_channel:
+        await bot_channel.send(f"Hi Friends! I'm online and ready to eat some spam! :D")
 
 @bot.event
 async def on_message(message):
