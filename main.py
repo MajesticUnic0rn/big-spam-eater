@@ -25,7 +25,7 @@ HONEY_POT_CHANNEL = 889466095810011137
 SPAM_EATER_ID = 1213171019838128128
 
 # Initialize bot
-intents = discord.Intents.default()
+intents = discord.Intents.all()
 intents.messages = True
 intents.guilds = True
 
