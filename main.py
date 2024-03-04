@@ -2,7 +2,7 @@ import discord
 import asyncio
 from discord.ext import commands
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict
 
 # Load environment variables
@@ -23,6 +23,8 @@ VAGUELY_OKAY_WEBSITES = [
 BOT_CHANNEL = 1091681853603324047
 HONEY_POT_CHANNEL = 889466095810011137
 SPAM_EATER_ID = 1213171019838128128
+#TEST_CHANNEL = 1074146361001386014
+
 
 # Initialize bot
 intents = discord.Intents.all()
@@ -38,10 +40,12 @@ def is_suspicious_url(content):
 def has_mention(message):
     return message.mention_everyone
 
-def is_new_user(user_id):
-    join_date = user_join_dates[user_id]
-    if join_date:
-        return (datetime.utcnow() - join_date) <= timedelta(hours=1)
+def is_new_user(guild,user_id):
+    member = guild.get_member(user_id)
+    if member and member.joined_at:
+        current_time_utc = datetime.now(timezone.utc)
+        is_new_user = (current_time_utc - member.joined_at).total_seconds() <= timedelta(hours=1).total_seconds()
+        return is_new_user
     else:
         return True
 
@@ -67,19 +71,23 @@ async def on_message(message):
             await message.delete()
             await message.guild.ban(message.author, reason="Ban by bot honey potted :D")
         if is_suspicious_url(message.content) or has_mention(message):
-            if is_new_user(message.author.id):
+            server_guild = bot.get_guild(message.guild.id)
+            if is_new_user(server_guild,message.author.id):
                 await warn_user(message.channel, message.author)
                 await message.delete()
                 await log_actions(message.content, message.author.name)
     await bot.process_commands(message)
 
-@bot.event
-async def on_member_join(member):
-    user_join_dates[member.id] = datetime.utcnow()
-
-@bot.event
-async def on_message_edit(before, after):
-    await on_message(after)
+## testing function for additional debugging 
+# @bot.event
+# async def on_message(message):
+#     if message.channel.id == TEST_CHANNEL:
+#         if message.author.id != SPAM_EATER_ID:
+#             bot_channel = bot.get_channel(BOT_CHANNEL)
+#             if bot_channel:
+#                 server_guild = bot.get_guild(message.guild.id)
+#                 time_bool=show_new_user(server_guild,message.author.id)
+#                 await bot_channel.send(f"{message.author.name} typed out this {message.content} and the join date is {time_bool}")
 
 # Start the bot
 bot.run(os.getenv('DISCORD_TOKEN'))
