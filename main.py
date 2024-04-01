@@ -66,16 +66,26 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    if message.channel.id != BOT_CHANNEL:
-        if message.channel.id == HONEY_POT_CHANNEL and message.author.id != SPAM_EATER_ID:
-            await message.delete()
-            await message.guild.ban(message.author, reason="Ban by bot honey potted :D")
+    # Check if the message is from the honey pot channel.
+    if message.channel.id == HONEY_POT_CHANNEL:
+        # Check if the author is not the spam eater.
+        if message.author.id != SPAM_EATER_ID:
+            await message.delete()  # Delete the message.
+            await message.guild.ban(message.author, reason="Ban by bot: Honey pot interaction")  # Ban the user.
+            return  # Stop further processing to avoid processing commands or other conditions.
+    
+    # For other channels, apply different checks.
+    else:
+        # Check for suspicious URLs or mentions in the message.
         if is_suspicious_url(message.content) or has_mention(message):
             server_guild = bot.get_guild(message.guild.id)
-            if is_new_user(server_guild,message.author.id):
-                await warn_user(message.channel, message.author)
-                await message.delete()
-                await log_actions(message.content, message.author.name)
+            # Check if the author is a new user.
+            if is_new_user(server_guild, message.author.id):
+                await warn_user(message.channel, message.author)  # Warn the user.
+                await message.delete()  # Delete the message.
+                await log_actions(message.content, message.author.name)  # Log the action.
+    
+    # Process commands if any. This is outside the 'else' block to ensure commands are processed even if the message is from the honey pot channel but by an allowed user (e.g., SPAM_EATER_ID).
     await bot.process_commands(message)
 
 ## testing function for additional debugging 
